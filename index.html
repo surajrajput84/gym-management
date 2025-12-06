@@ -25,9 +25,6 @@
         .container-card { background-color: #1f2937; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         input, select, textarea { background-color: #374151; border-color: #4b5563; color: #f9fafb; }
         input:focus, select:focus, textarea:focus { border-color: #10b981; box-shadow: 0 0 0 1px #10b981; }
-        .google-btn { background-color: #4285F4; color: white; border: none; border-radius: 4px; padding: 10px 24px; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: background-color 0.3s; width: 100%; }
-        .google-btn:hover { background-color: #357ae8; }
-        .google-btn img { width: 18px; height: 18px; }
         .tab-btn { padding: 10px 20px; border-radius: 8px; font-weight: 500; transition: all 0.3s; }
         .tab-btn.active { background-color: #10b981; color: white; }
         .tab-btn:not(.active) { background-color: #374151; color: #9ca3af; }
@@ -53,16 +50,6 @@
             <!-- Login Screen -->
             <div id="login-screen" class="hidden container-card p-8 rounded-xl max-w-lg mx-auto">
                 <h2 class="text-3xl font-bold mb-6 text-center">Login</h2>
-                
-                <!-- Google Sign-In Button -->
-                <div class="mb-4">
-                    <button id="google-signin-button" class="google-btn">
-                        <img src="https://www.google.com/favicon.ico" alt="Google">
-                        Sign in with Google
-                    </button>
-                </div>
-
-                <div class="text-center text-gray-400 mb-4">OR</div>
 
                 <!-- Email/Password Login -->
                 <form id="login-form" class="space-y-4">
@@ -465,1177 +452,1449 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword,
-            signInWithPopup, 
-            GoogleAuthProvider,
-            onAuthStateChanged, 
-            signOut,
-            createUserWithEmailAndPassword
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            doc, 
-            setDoc, 
-            getDoc,
-            collection,
-            addDoc,
-            getDocs,
-            deleteDoc,
-            updateDoc,
-            query,
-            where,
-            orderBy,
-            serverTimestamp
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { 
+    getAuth, 
+    signInWithEmailAndPassword,
+    onAuthStateChanged, 
+    signOut,
+    createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { 
+    getFirestore, 
+    doc, 
+    setDoc, 
+    getDoc,
+    collection,
+    addDoc,
+    getDocs,
+    deleteDoc,
+    updateDoc,
+    query,
+    where,
+    orderBy,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBg6zU37jMe4sqeDGWhpnTrcFrzGgJ5weI",
-            authDomain: "gym-management-b3495.firebaseapp.com",
-            projectId: "gym-management-b3495",
-            storageBucket: "gym-management-b3495.firebasestorage.app",
-            messagingSenderId: "128197872276",
-            appId: "1:128197872276:web:67de7114a35a857091c281"
-        };
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyBg6zU37jMe4sqeDGWhpnTrcFrzGgJ5weI",
+    authDomain: "gym-management-b3495.firebaseapp.com",
+    projectId: "gym-management-b3495",
+    storageBucket: "gym-management-b3495.firebasestorage.app",
+    messagingSenderId: "128197872276",
+    appId: "1:128197872276:web:67de7114a35a857091c281"
+};
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const googleProvider = new GoogleAuthProvider();
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-        console.log("Firebase initialized!");
+console.log("Firebase initialized!");
 
-        // Collections
-        const USERS_COLLECTION = 'users';
-        const PACKAGES_COLLECTION = 'packages';
-        const BILLS_COLLECTION = 'bills';
+// Collections
+const USERS_COLLECTION = 'users';
+const PACKAGES_COLLECTION = 'packages';
+const BILLS_COLLECTION = 'bills';
 
-        // DOM Elements
-        const elements = {
-            loading: document.getElementById('loading-state'),
-            loginScreen: document.getElementById('login-screen'),
-            adminDashboard: document.getElementById('admin-dashboard'),
-            memberDashboard: document.getElementById('member-dashboard'),
-            authStatus: document.getElementById('auth-status'),
-            loginForm: document.getElementById('login-form'),
-            loginMessage: document.getElementById('login-message'),
-            googleSigninButton: document.getElementById('google-signin-button'),
-            logoutBtnAdmin: document.getElementById('logout-btn-admin'),
-            logoutBtnMember: document.getElementById('logout-btn-member'),
-            adminEmail: document.getElementById('admin-email'),
-            memberWelcome: document.getElementById('member-welcome'),
-            memberEmailDisplay: document.getElementById('member-email-display'),
-            memberPackageDisplay: document.getElementById('member-package-display'),
-            toast: document.getElementById('toast')
-        };
+// DOM Elements
+const elements = {
+    loading: document.getElementById('loading-state'),
+    loginScreen: document.getElementById('login-screen'),
+    adminDashboard: document.getElementById('admin-dashboard'),
+    memberDashboard: document.getElementById('member-dashboard'),
+    authStatus: document.getElementById('auth-status'),
+    loginForm: document.getElementById('login-form'),
+    loginMessage: document.getElementById('login-message'),
+    logoutBtnAdmin: document.getElementById('logout-btn-admin'),
+    logoutBtnMember: document.getElementById('logout-btn-member'),
+    adminEmail: document.getElementById('admin-email'),
+    memberWelcome: document.getElementById('member-welcome'),
+    memberEmailDisplay: document.getElementById('member-email-display'),
+    memberPackageDisplay: document.getElementById('member-package-display'),
+    toast: document.getElementById('toast')
+};
 
-        // State Management
-        let currentUser = null;
-        let packages = [];
-        let members = [];
-        let bills = [];
+// State Management
+let currentUser = null;
+let packages = [];
+let members = [];
+let bills = [];
+let editingPackageId = null;
+let editingMemberId = null;
 
-        // Show/Hide Views
-        function showView(viewName) {
-            elements.loading.classList.add('hidden');
-            elements.loginScreen.classList.add('hidden');
-            elements.adminDashboard.classList.add('hidden');
-            elements.memberDashboard.classList.add('hidden');
+// Show/Hide Views
+function showView(viewName) {
+    elements.loading.classList.add('hidden');
+    elements.loginScreen.classList.add('hidden');
+    elements.adminDashboard.classList.add('hidden');
+    elements.memberDashboard.classList.add('hidden');
+    
+    switch(viewName) {
+        case 'loading':
+            elements.loading.classList.remove('hidden');
+            break;
+        case 'login':
+            elements.loginScreen.classList.remove('hidden');
+            elements.authStatus.textContent = "Please sign in";
+            break;
+        case 'admin':
+            elements.adminDashboard.classList.remove('hidden');
+            elements.authStatus.textContent = "Admin Dashboard";
+            break;
+        case 'member':
+            elements.memberDashboard.classList.remove('hidden');
+            elements.authStatus.textContent = "Member Dashboard";
+            break;
+    }
+}
+
+// Tab Management
+function initTabs() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.getAttribute('data-tab');
             
-            switch(viewName) {
-                case 'loading':
-                    elements.loading.classList.remove('hidden');
-                    break;
-                case 'login':
-                    elements.loginScreen.classList.remove('hidden');
-                    elements.authStatus.textContent = "Please sign in";
-                    break;
-                case 'admin':
-                    elements.adminDashboard.classList.remove('hidden');
-                    elements.authStatus.textContent = "Admin Dashboard";
-                    break;
-                case 'member':
-                    elements.memberDashboard.classList.remove('hidden');
-                    elements.authStatus.textContent = "Member Dashboard";
-                    break;
-            }
-        }
-
-        // Tab Management
-        function initTabs() {
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabPanels = document.querySelectorAll('.tab-panel');
+            // Update buttons
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
             
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const tabId = button.getAttribute('data-tab');
-                    
-                    // Update buttons
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    
-                    // Update panels
-                    tabPanels.forEach(panel => {
-                        panel.classList.add('hidden');
-                        panel.classList.remove('active');
-                    });
-                    
-                    const targetPanel = document.getElementById(`${tabId}-tab`);
-                    if (targetPanel) {
-                        targetPanel.classList.remove('hidden');
-                        targetPanel.classList.add('active');
-                    }
-                });
+            // Update panels
+            tabPanels.forEach(panel => {
+                panel.classList.add('hidden');
+                panel.classList.remove('active');
             });
-        }
-
-        // Show Toast Notification
-        function showToast(message, isError = false) {
-            elements.toast.textContent = message;
-            elements.toast.className = `fixed bottom-5 right-5 ${isError ? 'bg-red-600' : 'bg-primary'} text-white p-3 rounded-lg shadow-xl transition-all duration-300 transform translate-y-0 opacity-100 z-50`;
             
-            setTimeout(() => {
-                elements.toast.classList.remove('translate-y-0', 'opacity-100');
-                elements.toast.classList.add('translate-y-10', 'opacity-0');
-            }, 3000);
-        }
-
-        // Load Packages for Select Dropdown
-        async function loadPackagesForSelect() {
-            try {
-                const packagesSnapshot = await getDocs(collection(db, PACKAGES_COLLECTION));
-                const selectElement = document.getElementById('member-package');
-                
-                if (!selectElement) return;
-                
-                selectElement.innerHTML = '<option value="">Select Package</option>';
-                packages = [];
-                
-                packagesSnapshot.forEach(doc => {
-                    const pkg = { id: doc.id, ...doc.data() };
-                    packages.push(pkg);
-                    
-                    const option = document.createElement('option');
-                    option.value = pkg.id;
-                    option.textContent = `${pkg.name} - $${pkg.price} (${pkg.duration} days)`;
-                    selectElement.appendChild(option);
-                });
-                
-            } catch (error) {
-                console.error("Error loading packages for select:", error);
+            const targetPanel = document.getElementById(`${tabId}-tab`);
+            if (targetPanel) {
+                targetPanel.classList.remove('hidden');
+                targetPanel.classList.add('active');
             }
-        }
+        });
+    });
+}
 
-        // Load Members for Select Dropdown (for billing)
-        async function loadMembersForSelect() {
-            try {
-                const usersSnapshot = await getDocs(collection(db, USERS_COLLECTION));
-                const selectElement = document.getElementById('bill-member');
+// Show Toast Notification
+function showToast(message, isError = false) {
+    elements.toast.textContent = message;
+    elements.toast.className = `fixed bottom-5 right-5 ${isError ? 'bg-red-600' : 'bg-primary'} text-white p-3 rounded-lg shadow-xl transition-all duration-300 transform translate-y-0 opacity-100 z-50`;
+    
+    setTimeout(() => {
+        elements.toast.classList.remove('translate-y-0', 'opacity-100');
+        elements.toast.classList.add('translate-y-10', 'opacity-0');
+    }, 3000);
+}
+
+// Load Packages for Select Dropdown
+async function loadPackagesForSelect() {
+    try {
+        const packagesSnapshot = await getDocs(collection(db, PACKAGES_COLLECTION));
+        const selectElement = document.getElementById('member-package');
+        
+        if (!selectElement) return;
+        
+        selectElement.innerHTML = '<option value="">Select Package</option>';
+        packages = [];
+        
+        packagesSnapshot.forEach(doc => {
+            const pkg = { id: doc.id, ...doc.data() };
+            packages.push(pkg);
+            
+            const option = document.createElement('option');
+            option.value = pkg.id;
+            option.textContent = `${pkg.name} - $${pkg.price} (${pkg.duration} days)`;
+            selectElement.appendChild(option);
+        });
+        
+    } catch (error) {
+        console.error("Error loading packages for select:", error);
+    }
+}
+
+// Load Members for Select Dropdown (for billing)
+async function loadMembersForSelect() {
+    try {
+        const usersSnapshot = await getDocs(collection(db, USERS_COLLECTION));
+        const selectElement = document.getElementById('bill-member');
+        
+        if (!selectElement) return;
+        
+        selectElement.innerHTML = '<option value="">Select Member</option>';
+        members = [];
+        
+        usersSnapshot.forEach(doc => {
+            const userData = doc.data();
+            if (userData.role === 'member') {
+                members.push({ id: doc.id, ...userData });
                 
-                if (!selectElement) return;
-                
-                selectElement.innerHTML = '<option value="">Select Member</option>';
-                members = [];
-                
-                usersSnapshot.forEach(doc => {
-                    const userData = doc.data();
-                    if (userData.role === 'member') {
-                        members.push({ id: doc.id, ...userData });
-                        
-                        const option = document.createElement('option');
-                        option.value = doc.id;
-                        option.textContent = `${userData.name} (${userData.email})`;
-                        selectElement.appendChild(option);
-                    }
-                });
-                
-            } catch (error) {
-                console.error("Error loading members for select:", error);
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = `${userData.name} (${userData.email})`;
+                selectElement.appendChild(option);
             }
-        }
+        });
+        
+    } catch (error) {
+        console.error("Error loading members for select:", error);
+    }
+}
 
-        // Load Packages for Display
-        async function loadPackages() {
-            try {
-                const packagesSnapshot = await getDocs(collection(db, PACKAGES_COLLECTION));
-                const packagesList = document.getElementById('packages-list');
+// Load Packages for Display
+async function loadPackages() {
+    try {
+        const packagesSnapshot = await getDocs(collection(db, PACKAGES_COLLECTION));
+        const packagesList = document.getElementById('packages-list');
+        
+        if (!packagesList) return;
+        
+        packagesList.innerHTML = '';
+        
+        if (packagesSnapshot.empty) {
+            packagesList.innerHTML = `
+                <div class="bg-gray-800 p-4 rounded-lg md:col-span-3">
+                    <p class="text-gray-400">No packages available. Add your first package!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        packagesSnapshot.forEach(doc => {
+            const pkg = { id: doc.id, ...doc.data() };
+            
+            const packageCard = document.createElement('div');
+            packageCard.className = 'bg-gray-800 p-4 rounded-lg';
+            packageCard.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <h5 class="text-lg font-bold">${pkg.name}</h5>
+                    <span class="text-xs px-2 py-1 rounded ${pkg.status === 'active' ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-300'}">
+                        ${pkg.status || 'active'}
+                    </span>
+                </div>
+                <p class="text-2xl font-bold text-primary mb-2">$${pkg.price}</p>
+                <p class="text-sm text-gray-400 mb-1">${pkg.duration} days</p>
+                <p class="text-sm text-gray-500 mb-3">${pkg.description || 'No description'}</p>
+                <div class="flex justify-between items-center mt-4">
+                    <span class="text-xs text-gray-500">Visits/day: ${pkg.maxVisits || 'Unlimited'}</span>
+                    <div class="space-x-2">
+                        <button class="text-blue-400 hover:text-blue-300 text-sm" onclick="editPackage('${pkg.id}')">
+                            Edit
+                        </button>
+                        <button class="text-red-400 hover:text-red-300 text-sm" onclick="deletePackage('${pkg.id}', '${pkg.name}')">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+            packagesList.appendChild(packageCard);
+        });
+        
+        document.getElementById('total-packages').textContent = packagesSnapshot.size;
+        
+    } catch (error) {
+        console.error("Error loading packages:", error);
+        showToast("Error loading packages", true);
+    }
+}
+
+// Load Members
+async function loadMembers() {
+    try {
+        const usersSnapshot = await getDocs(collection(db, USERS_COLLECTION));
+        const membersList = document.getElementById('members-list');
+        
+        if (!membersList) return;
+        
+        membersList.innerHTML = '';
+        
+        let memberCount = 0;
+        members = [];
+        
+        usersSnapshot.forEach(doc => {
+            const userData = doc.data();
+            if (userData.role === 'member') {
+                memberCount++;
+                members.push({ id: doc.id, ...userData });
                 
-                if (!packagesList) return;
-                
-                packagesList.innerHTML = '';
-                
-                if (packagesSnapshot.empty) {
-                    packagesList.innerHTML = `
-                        <div class="bg-gray-800 p-4 rounded-lg md:col-span-3">
-                            <p class="text-gray-400">No packages available. Add your first package!</p>
-                        </div>
-                    `;
-                    return;
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-700 hover:bg-gray-800';
+                row.innerHTML = `
+                    <td class="py-3">${userData.name || 'N/A'}</td>
+                    <td class="py-3">${userData.email || 'N/A'}</td>
+                    <td class="py-3">${userData.packageName || userData.package || 'Not assigned'}</td>
+                    <td class="py-3">
+                        <span class="status-${userData.status || 'active'}">
+                            ${userData.status || 'active'}
+                        </span>
+                    </td>
+                    <td class="py-3">
+                        <button class="text-blue-400 hover:text-blue-300 mr-3" onclick="openEditMemberModal('${doc.id}')">
+                            Edit
+                        </button>
+                        <button class="text-red-400 hover:text-red-300" onclick="deleteMember('${doc.id}', '${userData.email}')">
+                            Delete
+                        </button>
+                    </td>
+                `;
+                membersList.appendChild(row);
+            }
+        });
+        
+        document.getElementById('total-members').textContent = memberCount;
+        
+        // Update recent members
+        updateRecentMembers();
+        
+    } catch (error) {
+        console.error("Error loading members:", error);
+        showToast("Error loading members", true);
+    }
+}
+
+// Load Bills
+async function loadBills() {
+    try {
+        const billsSnapshot = await getDocs(collection(db, BILLS_COLLECTION));
+        const billsList = document.getElementById('bills-list');
+        
+        if (!billsList) return;
+        
+        billsList.innerHTML = '';
+        bills = [];
+        
+        if (billsSnapshot.empty) {
+            billsList.innerHTML = `
+                <tr>
+                    <td colspan="5" class="py-4 text-center text-gray-400">
+                        No bills found. Generate your first bill!
+                    </td>
+                </tr>
+            `;
+            
+            // Update dashboard stats
+            document.getElementById('pending-bills').textContent = 0;
+            document.getElementById('pending-amount').textContent = 0;
+            updateUpcomingBills();
+            return;
+        }
+        
+        let pendingAmount = 0;
+        let pendingCount = 0;
+        let totalRevenue = 0;
+        
+        for (const doc of billsSnapshot.docs) {
+            const bill = { id: doc.id, ...doc.data() };
+            bills.push(bill);
+            
+            // Get member name
+            let memberName = bill.memberName || 'Unknown';
+            
+            if (bill.status === 'pending') {
+                pendingAmount += bill.amount || 0;
+                pendingCount++;
+            }
+            
+            if (bill.status === 'paid') {
+                totalRevenue += bill.amount || 0;
+            }
+            
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-700 hover:bg-gray-800';
+            row.innerHTML = `
+                <td class="py-3">${memberName}</td>
+                <td class="py-3">$${bill.amount || 0}</td>
+                <td class="py-3">${bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : 'N/A'}</td>
+                <td class="py-3">
+                    <span class="status-${bill.status || 'pending'}">
+                        ${bill.status || 'pending'}
+                    </span>
+                </td>
+                <td class="py-3">
+                    ${bill.status === 'pending' ? `
+                        <button class="text-green-400 hover:text-green-300 mr-3" onclick="markBillPaid('${doc.id}')">
+                            Mark Paid
+                        </button>
+                    ` : ''}
+                    <button class="text-red-400 hover:text-red-300" onclick="deleteBill('${doc.id}')">
+                        Delete
+                    </button>
+                </td>
+            `;
+            billsList.appendChild(row);
+        }
+        
+        // Update dashboard stats
+        document.getElementById('pending-bills').textContent = pendingCount;
+        document.getElementById('pending-amount').textContent = pendingAmount;
+        document.getElementById('total-revenue').textContent = `$${totalRevenue}`;
+        
+        updateUpcomingBills();
+        
+    } catch (error) {
+        console.error("Error loading bills:", error);
+        showToast("Error loading bills", true);
+    }
+}
+
+// Update Recent Members
+function updateRecentMembers() {
+    const recentMembersDiv = document.getElementById('recent-members');
+    if (!recentMembersDiv) return;
+    
+    const recentMembers = members.slice(-5).reverse();
+    
+    if (recentMembers.length === 0) {
+        recentMembersDiv.innerHTML = '<p class="text-gray-400">No recent members</p>';
+        return;
+    }
+    
+    recentMembersDiv.innerHTML = '';
+    recentMembers.forEach(member => {
+        const memberDiv = document.createElement('div');
+        memberDiv.className = 'flex justify-between items-center p-3 bg-gray-800 rounded-lg';
+        memberDiv.innerHTML = `
+            <div>
+                <p class="font-medium">${member.name}</p>
+                <p class="text-sm text-gray-400">${member.email}</p>
+            </div>
+            <span class="text-xs ${member.status === 'active' ? 'text-green-400' : 'text-yellow-400'}">
+                ${member.status || 'active'}
+            </span>
+        `;
+        recentMembersDiv.appendChild(memberDiv);
+    });
+}
+
+// Update Upcoming Bills
+function updateUpcomingBills() {
+    const upcomingBillsDiv = document.getElementById('upcoming-bills');
+    if (!upcomingBillsDiv) return;
+    
+    const upcoming = bills
+        .filter(bill => bill.status === 'pending' && bill.dueDate)
+        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+        .slice(0, 5);
+    
+    if (upcoming.length === 0) {
+        upcomingBillsDiv.innerHTML = '<p class="text-gray-400">No upcoming bills</p>';
+        return;
+    }
+    
+    upcomingBillsDiv.innerHTML = '';
+    upcoming.forEach(bill => {
+        const billDiv = document.createElement('div');
+        billDiv.className = 'flex justify-between items-center p-3 bg-gray-800 rounded-lg';
+        billDiv.innerHTML = `
+            <div>
+                <p class="font-medium">$${bill.amount}</p>
+                <p class="text-sm text-gray-400">${bill.description || 'Monthly fee'}</p>
+            </div>
+            <span class="text-xs text-gray-400">
+                Due: ${new Date(bill.dueDate).toLocaleDateString()}
+            </span>
+        `;
+        upcomingBillsDiv.appendChild(billDiv);
+    });
+}
+
+// Load Member Data
+async function loadMemberData(userId) {
+    try {
+        console.log("Loading member data for:", userId);
+        
+        // Load member info
+        const userDoc = await getDoc(doc(db, USERS_COLLECTION, userId));
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            
+            // Update member dashboard
+            if (elements.memberWelcome) {
+                elements.memberWelcome.textContent = `Welcome, ${userData.name || 'Member'}`;
+            }
+            if (elements.memberEmailDisplay) {
+                elements.memberEmailDisplay.textContent = userData.email;
+            }
+            if (elements.memberPackageDisplay) {
+                elements.memberPackageDisplay.textContent = userData.packageName || userData.package || 'Basic Plan';
+            }
+            if (document.getElementById('member-package-details')) {
+                document.getElementById('member-package-details').textContent = 
+                    userData.status === 'active' ? 'Active' : userData.status || 'Active';
+            }
+            if (document.getElementById('member-since')) {
+                try {
+                    const joinDate = userData.joinDate || (userData.createdAt?.toDate ? userData.createdAt.toDate() : null);
+                    document.getElementById('member-since').textContent = joinDate ? 
+                        new Date(joinDate).toLocaleDateString() : 'N/A';
+                } catch (error) {
+                    console.error("Error formatting join date:", error);
+                    document.getElementById('member-since').textContent = 'N/A';
                 }
-                
-                packagesSnapshot.forEach(doc => {
-                    const pkg = { id: doc.id, ...doc.data() };
-                    
-                    const packageCard = document.createElement('div');
-                    packageCard.className = 'bg-gray-800 p-4 rounded-lg';
-                    packageCard.innerHTML = `
-                        <div class="flex justify-between items-start mb-2">
-                            <h5 class="text-lg font-bold">${pkg.name}</h5>
-                            <span class="text-xs px-2 py-1 rounded ${pkg.status === 'active' ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-300'}">
-                                ${pkg.status || 'active'}
-                            </span>
-                        </div>
-                        <p class="text-2xl font-bold text-primary mb-2">$${pkg.price}</p>
-                        <p class="text-sm text-gray-400 mb-1">${pkg.duration} days</p>
-                        <p class="text-sm text-gray-500 mb-3">${pkg.description || 'No description'}</p>
-                        <div class="flex justify-between items-center mt-4">
-                            <span class="text-xs text-gray-500">Visits/day: ${pkg.maxVisits || 'Unlimited'}</span>
-                            <button class="text-red-400 hover:text-red-300 text-sm" onclick="deletePackage('${pkg.id}')">
-                                Delete
-                            </button>
-                        </div>
-                    `;
-                    packagesList.appendChild(packageCard);
-                });
-                
-                document.getElementById('total-packages').textContent = packagesSnapshot.size;
-                
-            } catch (error) {
-                console.error("Error loading packages:", error);
-                showToast("Error loading packages", true);
             }
         }
-
-        // Load Members
-        async function loadMembers() {
-            try {
-                const usersSnapshot = await getDocs(collection(db, USERS_COLLECTION));
-                const membersList = document.getElementById('members-list');
-                
-                if (!membersList) return;
-                
-                membersList.innerHTML = '';
-                
-                let memberCount = 0;
-                members = [];
-                
-                usersSnapshot.forEach(doc => {
-                    const userData = doc.data();
-                    if (userData.role === 'member') {
-                        memberCount++;
-                        members.push({ id: doc.id, ...userData });
-                        
-                        const row = document.createElement('tr');
-                        row.className = 'border-b border-gray-700 hover:bg-gray-800';
-                        row.innerHTML = `
-                            <td class="py-3">${userData.name || 'N/A'}</td>
-                            <td class="py-3">${userData.email || 'N/A'}</td>
-                            <td class="py-3">${userData.packageName || userData.package || 'Not assigned'}</td>
-                            <td class="py-3">
-                                <span class="status-${userData.status || 'active'}">
-                                    ${userData.status || 'active'}
-                                </span>
-                            </td>
-                            <td class="py-3">
-                                <button class="text-blue-400 hover:text-blue-300 mr-3" onclick="editMember('${doc.id}')">
-                                    Edit
-                                </button>
-                                <button class="text-red-400 hover:text-red-300" onclick="deleteMember('${doc.id}', '${userData.email}')">
-                                    Delete
-                                </button>
-                            </td>
-                        `;
-                        membersList.appendChild(row);
-                    }
-                });
-                
-                document.getElementById('total-members').textContent = memberCount;
-                
-                // Update recent members
-                updateRecentMembers();
-                
-            } catch (error) {
-                console.error("Error loading members:", error);
-                showToast("Error loading members", true);
-            }
-        }
-
-        // Load Bills
-        async function loadBills() {
-            try {
-                const billsSnapshot = await getDocs(collection(db, BILLS_COLLECTION));
-                const billsList = document.getElementById('bills-list');
-                
-                if (!billsList) return;
-                
-                billsList.innerHTML = '';
-                bills = [];
+        
+        // Load member bills
+        try {
+            const billsQuery = query(
+                collection(db, BILLS_COLLECTION),
+                where('memberId', '==', userId)
+            );
+            const billsSnapshot = await getDocs(billsQuery);
+            const memberBillsList = document.getElementById('member-bills-list');
+            
+            if (memberBillsList) {
+                memberBillsList.innerHTML = '';
                 
                 if (billsSnapshot.empty) {
-                    billsList.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="py-4 text-center text-gray-400">
-                                No bills found. Generate your first bill!
-                            </td>
-                        </tr>
-                    `;
+                    memberBillsList.innerHTML = '<p class="text-gray-400">No bills found</p>';
                     
-                    // Update dashboard stats
-                    document.getElementById('pending-bills').textContent = 0;
-                    document.getElementById('pending-amount').textContent = 0;
-                    updateUpcomingBills();
-                    return;
-                }
-                
-                let pendingAmount = 0;
-                let pendingCount = 0;
-                let totalRevenue = 0;
-                
-                for (const doc of billsSnapshot.docs) {
-                    const bill = { id: doc.id, ...doc.data() };
-                    bills.push(bill);
+                    // Update member bill info
+                    if (document.getElementById('member-next-bill')) {
+                        document.getElementById('member-next-bill').textContent = '$0';
+                    }
+                    if (document.getElementById('member-bill-due')) {
+                        document.getElementById('member-bill-due').textContent = 'No pending bills';
+                    }
+                } else {
+                    let nextBill = null;
                     
-                    // Get member name
-                    let memberName = bill.memberName || 'Unknown';
-                    
-                    if (bill.status === 'pending') {
-                        pendingAmount += bill.amount || 0;
-                        pendingCount++;
-                    }
-                    
-                    if (bill.status === 'paid') {
-                        totalRevenue += bill.amount || 0;
-                    }
-                    
-                    const row = document.createElement('tr');
-                    row.className = 'border-b border-gray-700 hover:bg-gray-800';
-                    row.innerHTML = `
-                        <td class="py-3">${memberName}</td>
-                        <td class="py-3">$${bill.amount || 0}</td>
-                        <td class="py-3">${bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : 'N/A'}</td>
-                        <td class="py-3">
-                            <span class="status-${bill.status || 'pending'}">
-                                ${bill.status || 'pending'}
-                            </span>
-                        </td>
-                        <td class="py-3">
-                            ${bill.status === 'pending' ? `
-                                <button class="text-green-400 hover:text-green-300 mr-3" onclick="markBillPaid('${doc.id}')">
-                                    Mark Paid
-                                </button>
-                            ` : ''}
-                            <button class="text-red-400 hover:text-red-300" onclick="deleteBill('${doc.id}')">
-                                Delete
-                            </button>
-                        </td>
-                    `;
-                    billsList.appendChild(row);
-                }
-                
-                // Update dashboard stats
-                document.getElementById('pending-bills').textContent = pendingCount;
-                document.getElementById('pending-amount').textContent = pendingAmount;
-                document.getElementById('total-revenue').textContent = `$${totalRevenue}`;
-                
-                updateUpcomingBills();
-                
-            } catch (error) {
-                console.error("Error loading bills:", error);
-                showToast("Error loading bills", true);
-            }
-        }
-
-        // Update Recent Members
-        function updateRecentMembers() {
-            const recentMembersDiv = document.getElementById('recent-members');
-            if (!recentMembersDiv) return;
-            
-            const recentMembers = members.slice(-5).reverse();
-            
-            if (recentMembers.length === 0) {
-                recentMembersDiv.innerHTML = '<p class="text-gray-400">No recent members</p>';
-                return;
-            }
-            
-            recentMembersDiv.innerHTML = '';
-            recentMembers.forEach(member => {
-                const memberDiv = document.createElement('div');
-                memberDiv.className = 'flex justify-between items-center p-3 bg-gray-800 rounded-lg';
-                memberDiv.innerHTML = `
-                    <div>
-                        <p class="font-medium">${member.name}</p>
-                        <p class="text-sm text-gray-400">${member.email}</p>
-                    </div>
-                    <span class="text-xs ${member.status === 'active' ? 'text-green-400' : 'text-yellow-400'}">
-                        ${member.status || 'active'}
-                    </span>
-                `;
-                recentMembersDiv.appendChild(memberDiv);
-            });
-        }
-
-        // Update Upcoming Bills
-        function updateUpcomingBills() {
-            const upcomingBillsDiv = document.getElementById('upcoming-bills');
-            if (!upcomingBillsDiv) return;
-            
-            const upcoming = bills
-                .filter(bill => bill.status === 'pending' && bill.dueDate)
-                .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-                .slice(0, 5);
-            
-            if (upcoming.length === 0) {
-                upcomingBillsDiv.innerHTML = '<p class="text-gray-400">No upcoming bills</p>';
-                return;
-            }
-            
-            upcomingBillsDiv.innerHTML = '';
-            upcoming.forEach(bill => {
-                const billDiv = document.createElement('div');
-                billDiv.className = 'flex justify-between items-center p-3 bg-gray-800 rounded-lg';
-                billDiv.innerHTML = `
-                    <div>
-                        <p class="font-medium">$${bill.amount}</p>
-                        <p class="text-sm text-gray-400">${bill.description || 'Monthly fee'}</p>
-                    </div>
-                    <span class="text-xs text-gray-400">
-                        Due: ${new Date(bill.dueDate).toLocaleDateString()}
-                    </span>
-                `;
-                upcomingBillsDiv.appendChild(billDiv);
-            });
-        }
-
-        // Load Member Data
-        async function loadMemberData(userId) {
-            try {
-                // Load member info
-                const userDoc = await getDoc(doc(db, USERS_COLLECTION, userId));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    
-                    // Update member dashboard
-                    if (elements.memberWelcome) {
-                        elements.memberWelcome.textContent = `Welcome, ${userData.name || 'Member'}`;
-                    }
-                    if (elements.memberEmailDisplay) {
-                        elements.memberEmailDisplay.textContent = userData.email;
-                    }
-                    if (elements.memberPackageDisplay) {
-                        elements.memberPackageDisplay.textContent = userData.packageName || userData.package || 'Basic Plan';
-                    }
-                    if (document.getElementById('member-package-details')) {
-                        document.getElementById('member-package-details').textContent = 
-                            userData.status === 'active' ? 'Active' : userData.status || 'Active';
-                    }
-                    if (document.getElementById('member-since')) {
-                        const joinDate = userData.createdAt?.toDate();
-                        document.getElementById('member-since').textContent = joinDate ? 
-                            joinDate.toLocaleDateString() : 'N/A';
-                    }
-                }
-                
-                // Load member bills
-                const billsQuery = query(
-                    collection(db, BILLS_COLLECTION),
-                    where('memberId', '==', userId),
-                    orderBy('dueDate', 'asc')
-                );
-                const billsSnapshot = await getDocs(billsQuery);
-                const memberBillsList = document.getElementById('member-bills-list');
-                
-                if (memberBillsList) {
-                    memberBillsList.innerHTML = '';
-                    
-                    if (billsSnapshot.empty) {
-                        memberBillsList.innerHTML = '<p class="text-gray-400">No bills found</p>';
-                        
-                        // Update member bill info
-                        if (document.getElementById('member-next-bill')) {
-                            document.getElementById('member-next-bill').textContent = '$0';
-                        }
-                        if (document.getElementById('member-bill-due')) {
-                            document.getElementById('member-bill-due').textContent = 'No pending bills';
-                        }
-                    } else {
-                        let nextBill = null;
-                        billsSnapshot.forEach(doc => {
-                            const bill = doc.data();
-                            const billDiv = document.createElement('div');
-                            billDiv.className = 'p-3 bg-gray-800 rounded-lg';
-                            billDiv.innerHTML = `
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <p class="font-medium">$${bill.amount}</p>
-                                        <p class="text-sm text-gray-400">${bill.description || 'Monthly fee'}</p>
-                                    </div>
-                                    <span class="text-xs ${bill.status === 'paid' ? 'text-green-400' : 'text-yellow-400'}">
-                                        ${bill.status || 'pending'}
-                                    </span>
+                    billsSnapshot.forEach(doc => {
+                        const bill = doc.data();
+                        const billDiv = document.createElement('div');
+                        billDiv.className = 'p-3 bg-gray-800 rounded-lg mb-3';
+                        billDiv.innerHTML = `
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-medium">$${bill.amount || 0}</p>
+                                    <p class="text-sm text-gray-400">${bill.description || 'Monthly fee'}</p>
                                 </div>
-                                <p class="text-xs text-gray-500 mt-2">
-                                    Due: ${bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : 'N/A'}
-                                </p>
-                            `;
-                            memberBillsList.appendChild(billDiv);
-                            
-                            // Find next pending bill
-                            if (bill.status === 'pending' && (!nextBill || new Date(bill.dueDate) < new Date(nextBill.dueDate))) {
+                                <span class="text-xs ${bill.status === 'paid' ? 'text-green-400' : bill.status === 'pending' ? 'text-yellow-400' : 'text-gray-400'}">
+                                    ${bill.status || 'pending'}
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">
+                                Due: ${bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : 'N/A'}
+                            </p>
+                        `;
+                        memberBillsList.appendChild(billDiv);
+                        
+                        // Find next pending bill
+                        if (bill.status === 'pending' && bill.dueDate) {
+                            const billDueDate = new Date(bill.dueDate);
+                            if (!nextBill || billDueDate < new Date(nextBill.dueDate)) {
                                 nextBill = bill;
                             }
-                        });
-                        
-                        // Update member bill info
-                        if (nextBill) {
-                            if (document.getElementById('member-next-bill')) {
-                                document.getElementById('member-next-bill').textContent = `$${nextBill.amount}`;
-                            }
-                            if (document.getElementById('member-bill-due')) {
-                                const dueDate = new Date(nextBill.dueDate);
-                                const today = new Date();
-                                const diffTime = dueDate - today;
-                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                document.getElementById('member-bill-due').textContent = 
-                                    diffDays > 0 ? `Due in ${diffDays} days` : 'Due today';
-                            }
+                        }
+                    });
+                    
+                    // Update member bill info
+                    if (nextBill) {
+                        if (document.getElementById('member-next-bill')) {
+                            document.getElementById('member-next-bill').textContent = `$${nextBill.amount || 0}`;
+                        }
+                        if (document.getElementById('member-bill-due')) {
+                            const dueDate = new Date(nextBill.dueDate);
+                            const today = new Date();
+                            const diffTime = dueDate - today;
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            document.getElementById('member-bill-due').textContent = 
+                                diffDays > 0 ? `Due in ${diffDays} days` : 
+                                diffDays === 0 ? 'Due today' : 
+                                `Overdue by ${Math.abs(diffDays)} days`;
                         }
                     }
                 }
+            }
+        } catch (billsError) {
+            console.error("Error loading member bills:", billsError);
+        }
+        
+    } catch (error) {
+        console.error("Error loading member data:", error);
+        showToast("Error loading member data", true);
+    }
+}
+
+// ==================== EDIT FUNCTIONS ====================
+
+// Open Edit Package Modal
+window.editPackage = async (packageId) => {
+    try {
+        const packageDoc = await getDoc(doc(db, PACKAGES_COLLECTION, packageId));
+        if (packageDoc.exists()) {
+            const packageData = packageDoc.data();
+            editingPackageId = packageId;
+            
+            // Fill form with package data
+            document.getElementById('package-name').value = packageData.name || '';
+            document.getElementById('package-price').value = packageData.price || '';
+            document.getElementById('package-duration').value = packageData.duration || '';
+            document.getElementById('package-desc').value = packageData.description || '';
+            document.getElementById('package-visits').value = packageData.maxVisits || '';
+            document.getElementById('package-status').value = packageData.status || 'active';
+            
+            // Change form button to "Update Package"
+            const submitButton = document.querySelector('#package-form button[type="submit"]');
+            submitButton.textContent = 'Update Package';
+            submitButton.className = 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg';
+            
+            // Add cancel button if not exists
+            let cancelButton = document.getElementById('cancel-edit-package');
+            if (!cancelButton) {
+                cancelButton = document.createElement('button');
+                cancelButton.id = 'cancel-edit-package';
+                cancelButton.type = 'button';
+                cancelButton.className = 'bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg ml-3';
+                cancelButton.textContent = 'Cancel Edit';
+                cancelButton.onclick = cancelEditPackage;
+                submitButton.parentNode.appendChild(cancelButton);
+            }
+            
+            showToast(`Editing package: ${packageData.name}`);
+        }
+    } catch (error) {
+        console.error("Error loading package for edit:", error);
+        showToast("Error loading package details", true);
+    }
+};
+
+// Cancel Edit Package
+function cancelEditPackage() {
+    editingPackageId = null;
+    
+    // Reset form
+    document.getElementById('package-form').reset();
+    document.getElementById('package-price').value = '49';
+    document.getElementById('package-duration').value = '30';
+    
+    // Reset button
+    const submitButton = document.querySelector('#package-form button[type="submit"]');
+    submitButton.textContent = 'Add Package';
+    submitButton.className = 'bg-primary hover:bg-secondary text-white font-bold py-3 px-6 rounded-lg';
+    
+    // Remove cancel button
+    const cancelButton = document.getElementById('cancel-edit-package');
+    if (cancelButton) cancelButton.remove();
+    
+    document.getElementById('package-message').textContent = '';
+    showToast("Edit cancelled");
+}
+
+// Open Edit Member Modal
+window.openEditMemberModal = async (memberId) => {
+    try {
+        const memberDoc = await getDoc(doc(db, USERS_COLLECTION, memberId));
+        if (memberDoc.exists()) {
+            const memberData = memberDoc.data();
+            editingMemberId = memberId;
+            
+            // Create or show edit modal
+            showEditMemberModal(memberData);
+        }
+    } catch (error) {
+        console.error("Error loading member for edit:", error);
+        showToast("Error loading member details", true);
+    }
+};
+
+// Show Edit Member Modal
+function showEditMemberModal(memberData) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('edit-member-modal');
+    if (existingModal) existingModal.remove();
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'edit-member-modal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Edit Member: ${memberData.name}</h3>
+                <button onclick="closeEditMemberModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            
+            <form id="edit-member-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium mb-1">Full Name</label>
+                        <input type="text" id="edit-member-name" class="p-3 rounded-lg border bg-gray-700" 
+                               value="${memberData.name || ''}" required>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium mb-1">Email</label>
+                        <input type="email" id="edit-member-email" class="p-3 rounded-lg border bg-gray-700" 
+                               value="${memberData.email || ''}" required readonly>
+                        <p class="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium mb-1">Phone</label>
+                        <input type="tel" id="edit-member-phone" class="p-3 rounded-lg border bg-gray-700" 
+                               value="${memberData.phone || ''}" required>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium mb-1">Package</label>
+                        <select id="edit-member-package" class="p-3 rounded-lg border bg-gray-700" required>
+                            <option value="">Loading packages...</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium mb-1">Join Date</label>
+                        <input type="date" id="edit-member-join-date" class="p-3 rounded-lg border bg-gray-700" 
+                               value="${memberData.joinDate || new Date().toISOString().split('T')[0]}" required>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium mb-1">Status</label>
+                        <select id="edit-member-status" class="p-3 rounded-lg border bg-gray-700">
+                            <option value="active" ${memberData.status === 'active' ? 'selected' : ''}>Active</option>
+                            <option value="pending" ${memberData.status === 'pending' ? 'selected' : ''}>Pending</option>
+                            <option value="expired" ${memberData.status === 'expired' ? 'selected' : ''}>Expired</option>
+                        </select>
+                    </div>
+                </div>
                 
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex-1">
+                        Update Member
+                    </button>
+                    <button type="button" onclick="closeEditMemberModal()" 
+                            class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg flex-1">
+                        Cancel
+                    </button>
+                </div>
+                <div id="edit-member-message" class="text-center mt-2"></div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Load packages for dropdown
+    loadPackagesForEditModal(memberData.package);
+    
+    // Add form submit event
+    document.getElementById('edit-member-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await updateMember();
+    });
+}
+
+// Load packages for edit modal
+async function loadPackagesForEditModal(selectedPackageId) {
+    try {
+        const packagesSnapshot = await getDocs(collection(db, PACKAGES_COLLECTION));
+        const selectElement = document.getElementById('edit-member-package');
+        
+        if (!selectElement) return;
+        
+        selectElement.innerHTML = '<option value="">Select Package</option>';
+        
+        packagesSnapshot.forEach(doc => {
+            const pkg = { id: doc.id, ...doc.data() };
+            const option = document.createElement('option');
+            option.value = pkg.id;
+            option.textContent = `${pkg.name} - $${pkg.price} (${pkg.duration} days)`;
+            option.selected = (pkg.id === selectedPackageId);
+            selectElement.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error loading packages for edit modal:", error);
+    }
+}
+
+// Update Member
+async function updateMember() {
+    if (!editingMemberId) return;
+    
+    const name = document.getElementById('edit-member-name').value.trim();
+    const phone = document.getElementById('edit-member-phone').value.trim();
+    const packageId = document.getElementById('edit-member-package').value;
+    const joinDate = document.getElementById('edit-member-join-date').value;
+    const status = document.getElementById('edit-member-status').value;
+    const messageEl = document.getElementById('edit-member-message');
+    
+    if (!name || !phone || !packageId) {
+        messageEl.innerHTML = '<span class="text-red-400">Please fill in all required fields</span>';
+        return;
+    }
+    
+    try {
+        messageEl.innerHTML = '<span class="text-yellow-400">Updating member...</span>';
+        
+        // Get package details
+        let packageName = 'Not assigned';
+        let packagePrice = 0;
+        let packageDuration = 30;
+        if (packageId) {
+            try {
+                const packageDoc = await getDoc(doc(db, PACKAGES_COLLECTION, packageId));
+                if (packageDoc.exists()) {
+                    const pkgData = packageDoc.data();
+                    packageName = pkgData.name;
+                    packagePrice = pkgData.price;
+                    packageDuration = pkgData.duration || 30;
+                }
             } catch (error) {
-                console.error("Error loading member data:", error);
+                console.error("Error loading package:", error);
             }
         }
+        
+        // Calculate expiry date
+        const expiryDate = new Date(joinDate);
+        expiryDate.setDate(expiryDate.getDate() + packageDuration);
+        
+        // Update member document
+        await updateDoc(doc(db, USERS_COLLECTION, editingMemberId), {
+            name: name,
+            phone: phone,
+            package: packageId,
+            packageName: packageName,
+            packagePrice: packagePrice,
+            joinDate: joinDate,
+            expiryDate: expiryDate.toISOString().split('T')[0],
+            status: status,
+            updatedAt: serverTimestamp()
+        });
+        
+        showToast(`Member ${name} updated successfully!`);
+        closeEditMemberModal();
+        
+        // Reload members list
+        await loadMembers();
+        await loadMembersForSelect();
+        
+    } catch (error) {
+        console.error("Error updating member:", error);
+        messageEl.innerHTML = `<span class="text-red-400">✗ Error: ${error.message}</span>`;
+        showToast("Failed to update member", true);
+    }
+}
 
-        // Ensure Test Accounts Exist
-        async function ensureTestAccounts() {
+// Close Edit Member Modal
+window.closeEditMemberModal = function() {
+    const modal = document.getElementById('edit-member-modal');
+    if (modal) modal.remove();
+    editingMemberId = null;
+};
+
+// ==================== EVENT LISTENERS ====================
+
+// Login Form Submission
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorMsg = elements.loginMessage;
+    
+    errorMsg.classList.add('hidden');
+    showView('loading');
+    
+    try {
+        console.log("Attempting login for:", email);
+        
+        // Try Firebase Auth login for all users
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log("Firebase Auth login successful:", userCredential.user.email);
+        showToast("Login successful!");
+        
+    } catch (authError) {
+        console.error("Login error:", authError.code, authError.message);
+        
+        // Show appropriate error message
+        let message = "Login failed";
+        switch (authError.code) {
+            case 'auth/invalid-email': message = "Invalid email address"; break;
+            case 'auth/user-disabled': message = "Account disabled"; break;
+            case 'auth/user-not-found': message = "No account found with this email"; break;
+            case 'auth/wrong-password': message = "Incorrect password"; break;
+            case 'auth/network-request-failed': message = "Network error. Check connection."; break;
+            case 'auth/too-many-requests': message = "Too many attempts. Try later."; break;
+            default: message = "Invalid email or password";
+        }
+        
+        errorMsg.textContent = message;
+        errorMsg.classList.remove('hidden');
+        showToast(message, true);
+        showView('login');
+    }
+});
+
+// Package Form Submission
+document.getElementById('package-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('package-name').value;
+    const price = document.getElementById('package-price').value;
+    const duration = document.getElementById('package-duration').value;
+    const description = document.getElementById('package-desc').value;
+    const visits = document.getElementById('package-visits').value;
+    const status = document.getElementById('package-status').value;
+    const messageEl = document.getElementById('package-message');
+    
+    try {
+        if (editingPackageId) {
+            // Update existing package
+            await updateDoc(doc(db, PACKAGES_COLLECTION, editingPackageId), {
+                name: name,
+                price: parseFloat(price),
+                duration: parseInt(duration),
+                description: description,
+                maxVisits: visits ? parseInt(visits) : null,
+                status: status,
+                updatedAt: serverTimestamp()
+            });
+            
+            showToast("Package updated successfully!");
+            messageEl.textContent = "✓ Package updated successfully!";
+            messageEl.className = "mt-2 text-sm text-green-400";
+            
+            // Reset edit mode
+            cancelEditPackage();
+            
+        } else {
+            // Add new package
+            await addDoc(collection(db, PACKAGES_COLLECTION), {
+                name: name,
+                price: parseFloat(price),
+                duration: parseInt(duration),
+                description: description,
+                maxVisits: visits ? parseInt(visits) : null,
+                status: status,
+                createdAt: serverTimestamp()
+            });
+            
+            showToast("Package added successfully!");
+            messageEl.textContent = "✓ Package added successfully!";
+            messageEl.className = "mt-2 text-sm text-green-400";
+            
+            // Clear form
+            e.target.reset();
+            document.getElementById('package-price').value = '49';
+            document.getElementById('package-duration').value = '30';
+        }
+        
+        // Reload packages
+        await loadPackages();
+        await loadPackagesForSelect();
+        
+    } catch (error) {
+        console.error("Error saving package:", error);
+        messageEl.textContent = "✗ Error: " + error.message;
+        messageEl.className = "mt-2 text-sm text-red-400";
+        showToast("Failed to save package", true);
+    }
+});
+
+// Member Form Submission
+document.getElementById('member-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('member-name').value.trim();
+    const email = document.getElementById('member-email').value.trim().toLowerCase();
+    const phone = document.getElementById('member-phone').value.trim();
+    const packageId = document.getElementById('member-package').value;
+    const joinDate = document.getElementById('member-join-date').value;
+    const status = document.getElementById('member-status').value;
+    const password = document.getElementById('member-password').value;
+    const confirmPassword = document.getElementById('member-password-confirm').value;
+    const messageEl = document.getElementById('member-message');
+    
+    // Validation
+    if (!name || !email || !phone) {
+        showToast("Please fill in all required fields", true);
+        return;
+    }
+    
+    if (password !== confirmPassword) {
+        showToast("Passwords do not match", true);
+        return;
+    }
+    
+    if (password.length < 6) {
+        showToast("Password must be at least 6 characters", true);
+        return;
+    }
+    
+    messageEl.innerHTML = '<span class="text-yellow-400">Creating member account...</span>';
+    
+    try {
+        // Get package details
+        let packageName = 'Not assigned';
+        let packagePrice = 0;
+        let packageDuration = 30;
+        if (packageId) {
             try {
-                // Test member account
-                const testEmail = 'test@member.com';
-                const testPassword = 'member123';
+                const packageDoc = await getDoc(doc(db, PACKAGES_COLLECTION, packageId));
+                if (packageDoc.exists()) {
+                    const pkgData = packageDoc.data();
+                    packageName = pkgData.name;
+                    packagePrice = pkgData.price;
+                    packageDuration = pkgData.duration || 30;
+                }
+            } catch (error) {
+                console.error("Error loading package:", error);
+            }
+        }
+        
+        // Create Firebase Authentication account for the member
+        console.log("Creating Firebase Auth account for:", email);
+        let memberUid;
+        
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            memberUid = userCredential.user.uid;
+            console.log("Firebase Auth account created with UID:", memberUid);
+        } catch (authError) {
+            console.error("Error creating Firebase Auth account:", authError);
+            
+            if (authError.code === 'auth/email-already-in-use') {
+                messageEl.innerHTML = `<span class="text-red-400">✗ Email ${email} is already registered. Use a different email.</span>`;
+                showToast("Email already registered", true);
+                return;
+            } else {
+                messageEl.innerHTML = `<span class="text-red-400">✗ Error creating account: ${authError.message}</span>`;
+                showToast("Failed to create member account", true);
+                return;
+            }
+        }
+        
+        // Calculate expiry date
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + packageDuration);
+        
+        // Create member document in Firestore
+        await setDoc(doc(db, USERS_COLLECTION, memberUid), {
+            uid: memberUid,
+            name: name,
+            email: email,
+            phone: phone,
+            package: packageId,
+            packageName: packageName,
+            packagePrice: packagePrice,
+            joinDate: joinDate || new Date().toISOString().split('T')[0],
+            expiryDate: expiryDate.toISOString().split('T')[0],
+            status: status,
+            role: 'member',
+            createdAt: serverTimestamp(),
+            membershipNumber: `GYM${Date.now().toString().slice(-6)}`
+        });
+        
+        // Create initial bill for the member
+        if (packagePrice > 0) {
+            const dueDate = new Date();
+            dueDate.setMonth(dueDate.getMonth() + 1);
+            
+            await addDoc(collection(db, BILLS_COLLECTION), {
+                memberId: memberUid,
+                memberName: name,
+                memberEmail: email,
+                amount: packagePrice,
+                description: `Monthly subscription - ${packageName}`,
+                dueDate: dueDate.toISOString().split('T')[0],
+                status: 'pending',
+                createdAt: serverTimestamp()
+            });
+        }
+        
+        showToast(`Member ${name} added successfully!`);
+        messageEl.innerHTML = `
+            <div class="bg-green-900/30 p-3 rounded-lg">
+                <span class="text-green-400 font-bold">✓ MEMBER ADDED SUCCESSFULLY!</span><br>
+                <span class="text-gray-300">Name: ${name}</span><br>
+                <span class="text-gray-400 text-sm">Email: ${email}</span><br>
+                <span class="text-gray-400 text-sm">Phone: ${phone}</span><br>
+                <span class="text-gray-400 text-sm">Package: ${packageName}</span><br>
+                <span class="text-gray-400 text-sm">Login Credentials:</span><br>
+                <span class="text-gray-300">Email: ${email}</span><br>
+                <span class="text-gray-300">Password: ${password}</span><br>
+                <span class="text-green-400 text-xs mt-2">✓ Member can now login with these credentials</span>
+            </div>
+        `;
+        
+        // Sign out member and sign admin back in
+        console.log("Signing out member and signing admin back in...");
+        await signOut(auth);
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Sign admin back in
+        try {
+            await signInWithEmailAndPassword(auth, 'admin@gym.com', 'admin123');
+            console.log("Admin signed back in successfully");
+            showToast("Admin session restored");
+        } catch (adminLoginError) {
+            console.error("Error signing admin back in:", adminLoginError);
+            showView('login');
+            showToast("Please login as admin again", true);
+        }
+        
+        // Clear form
+        document.getElementById('member-name').value = '';
+        document.getElementById('member-email').value = '';
+        document.getElementById('member-phone').value = '';
+        document.getElementById('member-password').value = 'member123';
+        document.getElementById('member-password-confirm').value = 'member123';
+        document.getElementById('member-join-date').value = new Date().toISOString().split('T')[0];
+        
+        // Reload data
+        await loadMembers();
+        await loadMembersForSelect();
+        await loadBills();
+        
+    } catch (error) {
+        console.error("Error adding member:", error);
+        messageEl.innerHTML = `<span class="text-red-400">✗ Error: ${error.message}</span>`;
+        showToast("Failed to add member: " + error.message, true);
+    }
+});
+
+// Bill Form Submission
+document.getElementById('bill-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const memberId = document.getElementById('bill-member').value;
+    const amount = document.getElementById('bill-amount').value;
+    const dueDate = document.getElementById('bill-due-date').value;
+    const description = document.getElementById('bill-description').value;
+    const messageEl = document.getElementById('bill-message');
+    
+    // Validation
+    if (!memberId) {
+        showToast("Please select a member", true);
+        return;
+    }
+    
+    if (!amount || amount <= 0) {
+        showToast("Please enter a valid amount", true);
+        return;
+    }
+    
+    if (!dueDate) {
+        showToast("Please select a due date", true);
+        return;
+    }
+    
+    try {
+        // Get member details
+        let memberName = 'Unknown';
+        let memberEmail = '';
+        try {
+            const memberDoc = await getDoc(doc(db, USERS_COLLECTION, memberId));
+            if (memberDoc.exists()) {
+                const memberData = memberDoc.data();
+                memberName = memberData.name;
+                memberEmail = memberData.email;
+            }
+        } catch (error) {
+            console.error("Error loading member:", error);
+        }
+        
+        // Create bill
+        await addDoc(collection(db, BILLS_COLLECTION), {
+            memberId: memberId,
+            memberName: memberName,
+            memberEmail: memberEmail,
+            amount: parseFloat(amount),
+            dueDate: dueDate,
+            description: description || 'Monthly subscription',
+            status: 'pending',
+            createdAt: serverTimestamp()
+        });
+        
+        showToast("Bill generated successfully!");
+        messageEl.textContent = "✓ Bill generated successfully!";
+        messageEl.className = "mt-2 text-sm text-green-400";
+        
+        // Clear form
+        e.target.reset();
+        document.getElementById('bill-due-date').value = new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0];
+        
+        // Reload bills
+        await loadBills();
+        
+    } catch (error) {
+        console.error("Error generating bill:", error);
+        messageEl.textContent = "✗ Error: " + error.message;
+        messageEl.className = "mt-2 text-sm text-red-400";
+        showToast("Failed to generate bill", true);
+    }
+});
+
+// Export Functions
+document.getElementById('export-members').addEventListener('click', () => {
+    const csv = convertToCSV(members);
+    downloadCSV(csv, 'members.csv');
+    showToast("Members exported successfully!");
+});
+
+document.getElementById('export-bills').addEventListener('click', () => {
+    const csv = convertToCSV(bills);
+    downloadCSV(csv, 'bills.csv');
+    showToast("Bills exported successfully!");
+});
+
+document.getElementById('export-packages').addEventListener('click', () => {
+    const csv = convertToCSV(packages);
+    downloadCSV(csv, 'packages.csv');
+    showToast("Packages exported successfully!");
+});
+
+function convertToCSV(data) {
+    if (data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const rows = data.map(row => 
+        headers.map(header => {
+            const cell = row[header];
+            return typeof cell === 'string' ? `"${cell.replace(/"/g, '""')}"` : cell;
+        }).join(',')
+    );
+    
+    return [headers.join(','), ...rows].join('\n');
+}
+
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+// Logout Function
+async function handleLogout() {
+    try {
+        // Sign out from Firebase Auth
+        if (auth.currentUser) {
+            await signOut(auth);
+        }
+        
+        // Reset current user
+        currentUser = null;
+        
+        showToast("Logged out successfully");
+        showView('login');
+        
+        // Reset login form
+        document.getElementById('login-email').value = 'admin@gym.com';
+        document.getElementById('login-password').value = 'admin123';
+        elements.loginMessage.classList.add('hidden');
+        
+    } catch (error) {
+        console.error("Logout error:", error);
+        showToast("Logout failed", true);
+    }
+}
+
+// ==================== GLOBAL FUNCTIONS ====================
+
+window.deleteMember = async (memberId, memberEmail) => {
+    if (confirm(`Delete member: ${memberEmail}?\n\nThis will delete their account permanently.`)) {
+        try {
+            // Delete from Firestore
+            await deleteDoc(doc(db, USERS_COLLECTION, memberId));
+            
+            // Note: In production, you should also delete Firebase Auth account using Admin SDK
+            
+            showToast("Member deleted!");
+            
+            await loadMembers();
+            await loadMembersForSelect();
+        } catch (error) {
+            console.error("Error deleting member:", error);
+            showToast("Failed to delete member", true);
+        }
+    }
+};
+
+window.deletePackage = async (packageId, packageName) => {
+    if (confirm(`Delete package: ${packageName}?\n\nMembers using this package will need to be reassigned.`)) {
+        try {
+            await deleteDoc(doc(db, PACKAGES_COLLECTION, packageId));
+            showToast("Package deleted!");
+            
+            await loadPackages();
+            await loadPackagesForSelect();
+        } catch (error) {
+            showToast("Failed to delete package", true);
+        }
+    }
+};
+
+window.deleteBill = async (billId) => {
+    if (confirm("Delete this bill?")) {
+        try {
+            await deleteDoc(doc(db, BILLS_COLLECTION, billId));
+            showToast("Bill deleted!");
+            
+            await loadBills();
+        } catch (error) {
+            showToast("Failed to delete bill", true);
+        }
+    }
+};
+
+window.markBillPaid = async (billId) => {
+    try {
+        await updateDoc(doc(db, BILLS_COLLECTION, billId), {
+            status: 'paid',
+            paidAt: serverTimestamp()
+        });
+        
+        showToast("Bill marked as paid!");
+        await loadBills();
+    } catch (error) {
+        showToast("Failed to update bill", true);
+    }
+};
+
+// ==================== AUTH STATE LISTENER ====================
+
+onAuthStateChanged(auth, async (user) => {
+    console.log("Auth state changed:", user ? user.email : "No user");
+    
+    if (user) {
+        // Firebase Auth user
+        currentUser = user;
+        elements.authStatus.textContent = `Signed in as ${user.email}`;
+        
+        try {
+            // Check user role in Firestore
+            const userDoc = await getDoc(doc(db, USERS_COLLECTION, user.uid));
+            
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
                 
-                try {
-                    await signInWithEmailAndPassword(auth, testEmail, testPassword);
-                    console.log("Test member account exists");
-                    await signOut(auth);
-                } catch (error) {
-                    console.log("Creating test member account...");
-                    const userCredential = await createUserWithEmailAndPassword(auth, testEmail, testPassword);
+                if (user.email === 'admin@gym.com' || userData.role === 'admin') {
+                    // Admin user
+                    console.log("Admin user detected");
                     
-                    await setDoc(doc(db, USERS_COLLECTION, userCredential.user.uid), {
-                        name: 'Test Member',
-                        email: testEmail,
-                        phone: '+1234567890',
-                        package: 'premium',
-                        packageName: 'Premium Plan',
-                        role: 'member',
-                        createdAt: serverTimestamp(),
-                        status: 'active'
-                    });
+                    // Show admin dashboard
+                    showView('admin');
+                    if (elements.adminEmail) {
+                        elements.adminEmail.textContent = user.email;
+                    }
                     
+                    // Initialize tabs
+                    initTabs();
+                    
+                    // Load admin data
+                    await loadPackagesForSelect();
+                    await loadMembersForSelect();
+                    await loadPackages();
+                    await loadMembers();
+                    await loadBills();
+                    
+                } else if (userData.role === 'member') {
+                    // Member user
+                    console.log("Member user detected");
+                    
+                    // Show member dashboard
+                    showView('member');
+                    await loadMemberData(user.uid);
+                    
+                } else {
+                    // Unknown role
+                    console.error("Unknown user role");
                     await signOut(auth);
-                    console.log("Test member account created");
+                    showView('login');
+                    showToast("Invalid user account", true);
                 }
                 
-                // Admin account
-                const adminEmail = 'admin@gym.com';
-                const adminPassword = 'admin123';
-                
-                try {
-                    await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-                    console.log("Admin account exists");
-                    await signOut(auth);
-                } catch (error) {
-                    console.log("Creating admin account...");
-                    const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
-                    
-                    await setDoc(doc(db, USERS_COLLECTION, userCredential.user.uid), {
-                        name: 'Administrator',
-                        email: adminEmail,
+            } else {
+                // User document doesn't exist in Firestore
+                if (user.email === 'admin@gym.com') {
+                    // Create admin document
+                    await setDoc(doc(db, USERS_COLLECTION, user.uid), {
+                        name: 'Admin',
+                        email: user.email,
                         role: 'admin',
                         createdAt: serverTimestamp(),
                         status: 'active'
                     });
                     
-                    await signOut(auth);
-                    console.log("Admin account created");
-                }
-                
-            } catch (error) {
-                console.error("Error ensuring test accounts:", error);
-            }
-        }
-
-        // Event Listeners
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const errorMsg = elements.loginMessage;
-            
-            errorMsg.classList.add('hidden');
-            
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                showToast("Login successful!");
-                
-            } catch (error) {
-                let message = "Login failed";
-                
-                switch (error.code) {
-                    case 'auth/invalid-email': message = "Invalid email"; break;
-                    case 'auth/user-disabled': message = "Account disabled"; break;
-                    case 'auth/user-not-found': message = "No account found"; break;
-                    case 'auth/wrong-password': message = "Incorrect password"; break;
-                    default: message = error.message;
-                }
-                
-                errorMsg.textContent = message;
-                errorMsg.classList.remove('hidden');
-                showToast(message, true);
-            }
-        });
-
-        // Google Sign-In
-        elements.googleSigninButton.addEventListener('click', async () => {
-            try {
-                const result = await signInWithPopup(auth, googleProvider);
-                showToast(`Welcome ${result.user.displayName}!`);
-                
-                // Check if user exists in Firestore
-                const userDoc = await getDoc(doc(db, USERS_COLLECTION, result.user.uid));
-                if (!userDoc.exists()) {
-                    await setDoc(doc(db, USERS_COLLECTION, result.user.uid), {
-                        name: result.user.displayName,
-                        email: result.user.email,
-                        role: 'member',
-                        createdAt: serverTimestamp(),
-                        status: 'active'
-                    });
-                }
-                
-            } catch (error) {
-                console.error("Google sign-in error:", error);
-                showToast("Google sign-in failed: " + error.message, true);
-            }
-        });
-
-        // Package Form
-        document.getElementById('package-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const name = document.getElementById('package-name').value;
-            const price = document.getElementById('package-price').value;
-            const duration = document.getElementById('package-duration').value;
-            const description = document.getElementById('package-desc').value;
-            const visits = document.getElementById('package-visits').value;
-            const status = document.getElementById('package-status').value;
-            
-            try {
-                await addDoc(collection(db, PACKAGES_COLLECTION), {
-                    name: name,
-                    price: parseFloat(price),
-                    duration: parseInt(duration),
-                    description: description,
-                    maxVisits: visits ? parseInt(visits) : null,
-                    status: status,
-                    createdAt: serverTimestamp()
-                });
-                
-                showToast("Package added successfully!");
-                document.getElementById('package-message').textContent = "✓ Package added successfully!";
-                document.getElementById('package-message').className = "mt-2 text-sm text-green-400";
-                
-                // Clear form
-                e.target.reset();
-                document.getElementById('package-price').value = '49';
-                document.getElementById('package-duration').value = '30';
-                
-                // Reload packages
-                await loadPackages();
-                await loadPackagesForSelect();
-                
-            } catch (error) {
-                console.error("Error adding package:", error);
-                showToast("Failed to add package", true);
-            }
-        });
-
-        // Member Form
-        document.getElementById('member-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const name = document.getElementById('member-name').value;
-            const email = document.getElementById('member-email').value;
-            const phone = document.getElementById('member-phone').value;
-            const packageId = document.getElementById('member-package').value;
-            const joinDate = document.getElementById('member-join-date').value;
-            const status = document.getElementById('member-status').value;
-            const password = document.getElementById('member-password').value;
-            const confirmPassword = document.getElementById('member-password-confirm').value;
-            const messageEl = document.getElementById('member-message');
-            
-            // Validation
-            if (password !== confirmPassword) {
-                showToast("Passwords do not match", true);
-                return;
-            }
-            
-            if (password.length < 6) {
-                showToast("Password must be at least 6 characters", true);
-                return;
-            }
-            
-            try {
-                messageEl.innerHTML = '<span class="text-yellow-400">Creating member account...</span>';
-                
-                // Get package details
-                let packageName = 'Not assigned';
-                let packagePrice = 0;
-                let packageDuration = 30;
-                if (packageId) {
-                    const packageDoc = await getDoc(doc(db, PACKAGES_COLLECTION, packageId));
-                    if (packageDoc.exists()) {
-                        const pkgData = packageDoc.data();
-                        packageName = pkgData.name;
-                        packagePrice = pkgData.price;
-                        packageDuration = pkgData.duration || 30;
+                    showView('admin');
+                    if (elements.adminEmail) {
+                        elements.adminEmail.textContent = user.email;
                     }
-                }
-                
-                // Store current admin session
-                const currentAdmin = auth.currentUser;
-                const adminEmail = currentAdmin?.email;
-                const adminPassword = 'admin123';
-                
-                try {
-                    // Create auth account for member
-                    console.log("Creating Firebase auth account for:", email);
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const memberUid = userCredential.user.uid;
-                    
-                    // Create user document in Firestore
-                    await setDoc(doc(db, USERS_COLLECTION, memberUid), {
-                        name: name,
-                        email: email,
-                        phone: phone,
-                        package: packageId,
-                        packageName: packageName,
-                        packagePrice: packagePrice,
-                        joinDate: joinDate || new Date().toISOString().split('T')[0],
-                        expiryDate: new Date(new Date().getTime() + packageDuration * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        status: status,
-                        role: 'member',
-                        password: password,
-                        createdAt: serverTimestamp(),
-                        membershipNumber: `GYM${Date.now().toString().slice(-6)}`
-                    });
-                    
-                    // Create initial bill for the member
-                    if (packagePrice > 0) {
-                        const dueDate = new Date();
-                        dueDate.setMonth(dueDate.getMonth() + 1);
-                        
-                        await addDoc(collection(db, BILLS_COLLECTION), {
-                            memberId: memberUid,
-                            memberName: name,
-                            memberEmail: email,
-                            amount: packagePrice,
-                            description: `Monthly subscription - ${packageName}`,
-                            dueDate: dueDate.toISOString().split('T')[0],
-                            status: 'pending',
-                            createdAt: serverTimestamp()
-                        });
-                    }
-                    
-                    // IMPORTANT: Sign out the member and sign back in as admin
-                    await signOut(auth);
-                    
-                    // Wait a moment for Firebase to process the sign out
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    // Sign back in as admin
-                    if (adminEmail === 'admin@gym.com') {
-                        console.log("Signing back in as admin...");
-                        await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-                    }
-                    
-                    showToast(`Member ${name} added successfully!`);
-                    messageEl.innerHTML = `
-                        <div class="bg-green-900/30 p-3 rounded-lg">
-                            <span class="text-green-400 font-bold">✓ MEMBER ADDED SUCCESSFULLY!</span><br>
-                            <span class="text-gray-300">Name: ${name}</span><br>
-                            <span class="text-gray-400 text-sm">Email: ${email}</span><br>
-                            <span class="text-gray-400 text-sm">Phone: ${phone}</span><br>
-                            <span class="text-gray-400 text-sm">Package: ${packageName}</span><br>
-                            <span class="text-gray-400 text-sm">Password: ${password}</span>
-                        </div>
-                    `;
-                    
-                    // Clear form
-                    document.getElementById('member-name').value = '';
-                    document.getElementById('member-email').value = '';
-                    document.getElementById('member-phone').value = '';
-                    document.getElementById('member-password').value = 'member123';
-                    document.getElementById('member-password-confirm').value = 'member123';
-                    document.getElementById('member-join-date').value = new Date().toISOString().split('T')[0];
-                    
-                    // Reload data
-                    await loadMembers();
-                    await loadMembersForSelect();
-                    await loadBills();
-                    
-                } catch (authError) {
-                    // Handle specific Firebase auth errors
-                    if (authError.code === 'auth/email-already-in-use') {
-                        // Email already exists in auth - create Firestore document only
-                        showToast("Member already exists in system. Adding to database...");
-                        
-                        // Generate a unique ID for Firestore
-                        const memberId = `member_${Date.now()}`;
-                        
-                        await setDoc(doc(db, USERS_COLLECTION, memberId), {
-                            name: name,
-                            email: email,
-                            phone: phone,
-                            package: packageId,
-                            packageName: packageName,
-                            packagePrice: packagePrice,
-                            joinDate: joinDate || new Date().toISOString().split('T')[0],
-                            expiryDate: new Date(new Date().getTime() + packageDuration * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                            status: status,
-                            role: 'member',
-                            password: password,
-                            authExists: true,
-                            createdAt: serverTimestamp(),
-                            membershipNumber: `GYM${Date.now().toString().slice(-6)}`
-                        });
-                        
-                        showToast(`Member ${name} added to database!`);
-                        messageEl.innerHTML = `
-                            <div class="bg-yellow-900/30 p-3 rounded-lg">
-                                <span class="text-yellow-400 font-bold">✓ MEMBER ADDED TO DATABASE!</span><br>
-                                <span class="text-gray-300">Note: Account already exists in authentication system</span><br>
-                                <span class="text-gray-400 text-sm">Member can login with email: ${email}</span>
-                            </div>
-                        `;
-                        
-                        // Clear form and reload data
-                        document.getElementById('member-name').value = '';
-                        document.getElementById('member-email').value = '';
-                        document.getElementById('member-phone').value = '';
-                        document.getElementById('member-password').value = 'member123';
-                        document.getElementById('member-password-confirm').value = 'member123';
-                        
-                        await loadMembers();
-                        await loadMembersForSelect();
-                        
-                    } else if (authError.code === 'auth/weak-password') {
-                        showToast("Password is too weak. Use at least 6 characters.", true);
-                        messageEl.innerHTML = `<span class="text-red-400">✗ Password is too weak</span>`;
-                    } else {
-                        throw authError;
-                    }
-                }
-                
-            } catch (error) {
-                console.error("Error adding member:", error);
-                messageEl.innerHTML = `<span class="text-red-400">✗ Error: ${error.message}</span>`;
-                showToast("Failed to add member: " + error.message, true);
-            }
-        });
-
-        // Bill Form Submission
-        document.getElementById('bill-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const memberId = document.getElementById('bill-member').value;
-            const amount = document.getElementById('bill-amount').value;
-            const dueDate = document.getElementById('bill-due-date').value;
-            const description = document.getElementById('bill-description').value;
-            const messageEl = document.getElementById('bill-message');
-            
-            // Validation
-            if (!memberId) {
-                showToast("Please select a member", true);
-                return;
-            }
-            
-            if (!amount || amount <= 0) {
-                showToast("Please enter a valid amount", true);
-                return;
-            }
-            
-            if (!dueDate) {
-                showToast("Please select a due date", true);
-                return;
-            }
-            
-            try {
-                // Get member details
-                let memberName = 'Unknown';
-                let memberEmail = '';
-                const memberDoc = await getDoc(doc(db, USERS_COLLECTION, memberId));
-                if (memberDoc.exists()) {
-                    const memberData = memberDoc.data();
-                    memberName = memberData.name;
-                    memberEmail = memberData.email;
-                }
-                
-                // Create bill
-                await addDoc(collection(db, BILLS_COLLECTION), {
-                    memberId: memberId,
-                    memberName: memberName,
-                    memberEmail: memberEmail,
-                    amount: parseFloat(amount),
-                    dueDate: dueDate,
-                    description: description || 'Monthly subscription',
-                    status: 'pending',
-                    createdAt: serverTimestamp()
-                });
-                
-                showToast("Bill generated successfully!");
-                messageEl.textContent = "✓ Bill generated successfully!";
-                messageEl.className = "mt-2 text-sm text-green-400";
-                
-                // Clear form
-                e.target.reset();
-                document.getElementById('bill-due-date').value = new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0];
-                
-                // Reload bills
-                await loadBills();
-                
-            } catch (error) {
-                console.error("Error generating bill:", error);
-                messageEl.textContent = "✗ Error: " + error.message;
-                messageEl.className = "mt-2 text-sm text-red-400";
-                showToast("Failed to generate bill", true);
-            }
-        });
-
-        // Export Functions
-        document.getElementById('export-members').addEventListener('click', () => {
-            const csv = convertToCSV(members);
-            downloadCSV(csv, 'members.csv');
-            showToast("Members exported successfully!");
-        });
-        
-        document.getElementById('export-bills').addEventListener('click', () => {
-            const csv = convertToCSV(bills);
-            downloadCSV(csv, 'bills.csv');
-            showToast("Bills exported successfully!");
-        });
-        
-        document.getElementById('export-packages').addEventListener('click', () => {
-            const csv = convertToCSV(packages);
-            downloadCSV(csv, 'packages.csv');
-            showToast("Packages exported successfully!");
-        });
-
-        function convertToCSV(data) {
-            if (data.length === 0) return '';
-            
-            const headers = Object.keys(data[0]);
-            const rows = data.map(row => 
-                headers.map(header => {
-                    const cell = row[header];
-                    return typeof cell === 'string' ? `"${cell.replace(/"/g, '""')}"` : cell;
-                }).join(',')
-            );
-            
-            return [headers.join(','), ...rows].join('\n');
-        }
-
-        function downloadCSV(csv, filename) {
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
-
-        // Logout
-        async function handleLogout() {
-            try {
-                await signOut(auth);
-                showToast("Logged out successfully");
-                showView('login');
-            } catch (error) {
-                console.error("Logout error:", error);
-                showToast("Logout failed", true);
-            }
-        }
-
-        // Global Functions
-        window.deleteMember = async (memberId, memberEmail) => {
-            if (confirm(`Delete member: ${memberEmail}?`)) {
-                try {
-                    await deleteDoc(doc(db, USERS_COLLECTION, memberId));
-                    showToast("Member deleted!");
-                    
-                    await loadMembers();
-                    await loadMembersForSelect();
-                } catch (error) {
-                    showToast("Failed to delete member", true);
-                }
-            }
-        };
-
-        window.deletePackage = async (packageId) => {
-            if (confirm("Delete this package?")) {
-                try {
-                    await deleteDoc(doc(db, PACKAGES_COLLECTION, packageId));
-                    showToast("Package deleted!");
-                    
-                    await loadPackages();
+                    initTabs();
                     await loadPackagesForSelect();
-                } catch (error) {
-                    showToast("Failed to delete package", true);
-                }
-            }
-        };
-
-        window.deleteBill = async (billId) => {
-            if (confirm("Delete this bill?")) {
-                try {
-                    await deleteDoc(doc(db, BILLS_COLLECTION, billId));
-                    showToast("Bill deleted!");
-                    
+                    await loadMembersForSelect();
+                    await loadPackages();
+                    await loadMembers();
                     await loadBills();
-                } catch (error) {
-                    showToast("Failed to delete bill", true);
-                }
-            }
-        };
-
-        window.markBillPaid = async (billId) => {
-            try {
-                await updateDoc(doc(db, BILLS_COLLECTION, billId), {
-                    status: 'paid',
-                    paidAt: serverTimestamp()
-                });
-                
-                showToast("Bill marked as paid!");
-                await loadBills();
-            } catch (error) {
-                showToast("Failed to update bill", true);
-            }
-        };
-
-        window.editMember = async (memberId) => {
-            const member = members.find(m => m.id === memberId);
-            if (member) {
-                showToast(`Edit member: ${member.name}`, false);
-                // In a real app, you would open a modal with edit form
-            }
-        };
-
-        // Auth State Listener
-        onAuthStateChanged(auth, async (user) => {
-            console.log("Auth state changed:", user ? user.email : "No user");
-            
-            if (user) {
-                currentUser = user;
-                elements.authStatus.textContent = `Signed in as ${user.email}`;
-                
-                try {
-                    const userDoc = await getDoc(doc(db, USERS_COLLECTION, user.uid));
                     
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
-                        
-                        if (user.email === 'admin@gym.com' || userData.role === 'admin') {
-                            // Admin dashboard
-                            if (elements.adminEmail) {
-                                elements.adminEmail.textContent = user.email;
-                            }
-                            showView('admin');
-                            
-                            // Initialize tabs
-                            initTabs();
-                            
-                            // Load admin data
-                            await loadPackagesForSelect();
-                            await loadMembersForSelect();
-                            await loadPackages();
-                            await loadMembers();
-                            await loadBills();
-                            
-                        } else {
-                            // Member dashboard
-                            showView('member');
-                            await loadMemberData(user.uid);
-                        }
-                    } else {
-                        // User doc doesn't exist - could be newly created member
-                        // Check if it's admin email
-                        if (user.email === 'admin@gym.com') {
-                            showView('admin');
-                            if (elements.adminEmail) {
-                                elements.adminEmail.textContent = user.email;
-                            }
-                            initTabs();
-                            await loadPackagesForSelect();
-                            await loadMembersForSelect();
-                            await loadPackages();
-                            await loadMembers();
-                            await loadBills();
-                        } else {
-                            // Default to member view
-                            showView('member');
-                        }
-                    }
-                } catch (error) {
-                    console.error("Auth state error:", error);
+                } else {
+                    // Unknown user - sign them out
+                    await signOut(auth);
                     showView('login');
+                    showToast("Account not found in system", true);
                 }
+            }
+            
+        } catch (error) {
+            console.error("Error checking user role:", error);
+            
+            // Fallback: if email is admin@gym.com, show admin dashboard
+            if (user.email === 'admin@gym.com') {
+                showView('admin');
+                if (elements.adminEmail) {
+                    elements.adminEmail.textContent = user.email;
+                }
+                initTabs();
             } else {
-                // No user
-                showView('login');
+                // For members, try to show member dashboard anyway
+                showView('member');
+                await loadMemberData(user.uid);
             }
-        });
+        }
+        
+    } else {
+        // No Firebase Auth user
+        showView('login');
+    }
+});
 
-        // Initialize
-        window.onload = async () => {
-            console.log("App initialized");
-            
-            // Pre-fill login form
-            document.getElementById('login-email').value = 'admin@gym.com';
-            document.getElementById('login-password').value = 'admin123';
-            
-            // Set default dates
-            const today = new Date().toISOString().split('T')[0];
-            const nextMonth = new Date();
-            nextMonth.setMonth(nextMonth.getMonth() + 1);
-            const nextMonthStr = nextMonth.toISOString().split('T')[0];
-            
-            if (document.getElementById('member-join-date')) {
-                document.getElementById('member-join-date').value = today;
-            }
-            if (document.getElementById('bill-due-date')) {
-                document.getElementById('bill-due-date').value = nextMonthStr;
-            }
-            
-            // Ensure test accounts
-            await ensureTestAccounts();
-            
-            // Set event listeners
-            if (elements.logoutBtnAdmin) {
-                elements.logoutBtnAdmin.addEventListener('click', handleLogout);
-            }
-            if (elements.logoutBtnMember) {
-                elements.logoutBtnMember.addEventListener('click', handleLogout);
-            }
-            
-            showView('login');
-        };
+// ==================== INITIALIZATION ====================
 
+window.onload = async () => {
+    console.log("App initialized");
+    
+    // Pre-fill login form
+    document.getElementById('login-email').value = 'admin@gym.com';
+    document.getElementById('login-password').value = 'admin123';
+    
+    // Set default dates
+    const today = new Date().toISOString().split('T')[0];
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const nextMonthStr = nextMonth.toISOString().split('T')[0];
+    
+    if (document.getElementById('member-join-date')) {
+        document.getElementById('member-join-date').value = today;
+    }
+    if (document.getElementById('bill-due-date')) {
+        document.getElementById('bill-due-date').value = nextMonthStr;
+    }
+    
+    // Set event listeners for logout buttons
+    if (elements.logoutBtnAdmin) {
+        elements.logoutBtnAdmin.addEventListener('click', handleLogout);
+    }
+    if (elements.logoutBtnMember) {
+        elements.logoutBtnMember.addEventListener('click', handleLogout);
+    }
+    
+    // Show login screen initially
+    showView('login');
+};
+
+console.log("Script loaded successfully");
     </script>
 </body>
 </html>
